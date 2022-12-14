@@ -296,26 +296,49 @@ left_car = vehicle(scenario, ...
     'Position', [24 30 0.01], ...
     'Mesh', driving.scenario.carMesh, ...
     'Name', 'Left Car');
-waypoints = [24 30 0.01;
-    24 -25 0.01;
-    24 -30 0.01];
-speed = [normal_vehicle_speed;normal_vehicle_speed;0];
-waittime = [0;0;wait_end];
+waypoints=[27 30 0.01;
+    27.0 11.0 0.01;
+    27.0 7.0 0.01;
+    27.5 6.0 0.01;
+    29.5 6.0 0.01;
+    30.5 6.0 0.01;
+    32.0 7.0 0.01;
+    32.0 8.0 0.01;
+    32.0 11.0 0.01;
+    32.0 30.00 0.01];
+speed = [normal_vehicle_speed;normal_vehicle_speed;normal_vehicle_speed;
+    normal_vehicle_speed;normal_vehicle_speed;normal_vehicle_speed;
+    normal_vehicle_speed;normal_vehicle_speed;normal_vehicle_speed;0];
+waittime = [0;0;0;0;0;0;0;0;0;wait_end];
 trajectory(left_car, waypoints, speed, waittime);
 
-% Add the actors
-% normal right vehicle
-right_car = vehicle(scenario, ...
-    'ClassID', 1, ...
-    'Position', [24 30 0.01], ...
-    'Mesh', driving.scenario.carMesh, ...
-    'Name', 'Right car');
-waypoints = [32 -30 0.01;
-    32 25 0.01;
-    32 30 0.01];
-speed = [normal_vehicle_speed;normal_vehicle_speed;0];
-waittime = [0;0;wait_end];
-trajectory(right_car, waypoints, speed, waittime);
+% % Add the actors
+% % normal right vehicle
+% right_car = vehicle(scenario, ...
+%     'ClassID', 1, ...
+%     'Position', [24 30 0.01], ...
+%     'Mesh', driving.scenario.carMesh, ...
+%     'Name', 'Right car');
+% % waypoints = [24 30 0.01;
+% %     25 -30 0.01];
+% % speed = [60;60];
+% % trajectory(car, waypoints, speed);
+% % waypoints = [32 -30 0.01;
+% %     32 25 0.01;
+% %     32 30 0.01];
+% waypoints = [32 -30 0.01;
+%     32.0 -11.0 0.01;
+%     32.0 -2.5 0.01;
+%     30.0 -1.0 0.01;
+%     27.5 0.0 0.01;
+%     23.0 1.0 0.01;
+%     20.0 2.0 0.01;
+%     15.0 2.0 0.01];
+% speed = [normal_vehicle_speed;normal_vehicle_speed;normal_vehicle_speed;
+%     normal_vehicle_speed;normal_vehicle_speed;normal_vehicle_speed;
+%     normal_vehicle_speed;0];
+% waittime = [0;0;0;0;0;0;0;wait_end];
+% trajectory(right_car, waypoints, speed, waittime);
 
 % Add the ego vehicle
 % sensor vehicle

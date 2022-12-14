@@ -2,93 +2,115 @@
 scenario = drivingScenario;
 scenario.SampleTime = 0.01;
 
-% Create the drivingScenario object and ego car
-[scenario, egoVehicle, speed, waypoints] = createDrivingScenario;
+% define parameter
+count = 0;
+situation_num = 1;
+sensor_vehicle_speed = 10;
+normal_vehicle_speed = 10;
+wait_end = 5;
 
-% Create all the sensors
-[sensors, numSensors] = createSensors(scenario);
-
-% Register actor profiles with the sensors.
-profiles = actorProfiles(scenario);
-for m = 1:numel(sensors)
-    if isa(sensors{m},'drivingRadarDataGenerator')
-        sensors{m}.Profiles = profiles;
-    else
-        sensors{m}.ActorProfiles = profiles;
+for svs = 10:5:60
+    for nvs = 10:5:60
+        fprintf('Situation %d: sensor_vehicle_speed: %d m/s, normal_vehicle_speed: %d m/s\n', situation_num, svs, nvs);
+        displaySceneAndVehicle(situation_num, count, svs, nvs, wait_end);
+        situation_num = situation_num + 1;
     end
 end
 
 
-tracker = multiObjectTracker('FilterInitializationFcn', @initSimDemoFilter, ...
-    'AssignmentThreshold', 30, 'ConfirmationThreshold', [4 5]);
-positionSelector = [1 0 0 0; 0 0 1 0]; % Position selector
-velocitySelector = [0 1 0 0; 0 0 0 1]; % Velocity selector
-
-% Create the display and return a handle to the bird's-eye plot
-BEP = createDemoDisplay(egoVehicle, sensors);
-
-toSnap = true;
-
-count = 0
-while advance(scenario) && ishghandle(BEP.Parent)
-    % Get the scenario time
-    time = scenario.SimulationTime;
-
-    % Get the position of the other vehicle in ego vehicle coordinates
-    ta = targetPoses(egoVehicle);
-
-    % Simulate the sensors
-    detectionClusters = {};
-    isValidTime = false(1,8);
-    for i = 1:2
-        [sensorDets,numValidDets,isValidTime(i)] = sensors{i}(ta, time);
-        if numValidDets
-            for j = 1:numValidDets
-                % Vision detections do not report SNR. The tracker requires
-                % that they have the same object attributes as the radar
-                % detections. This adds the SNR object attribute to vision
-                % detections and sets it to a NaN.
-                if ~isfield(sensorDets{j}.ObjectAttributes{1}, 'SNR')
-                    sensorDets{j}.ObjectAttributes{1}.SNR = NaN;
-                end
-
-                % Remove the Z-component of measured position and velocity
-                % from the Measurement and MeasurementNoise fields
-                sensorDets{j}.Measurement = sensorDets{j}.Measurement([1 2 4 5]);
-                sensorDets{j}.MeasurementNoise = sensorDets{j}.MeasurementNoise([1 2 4 5],[1 2 4 5]);
-            end
-            detectionClusters = [detectionClusters; sensorDets]; %#ok<AGROW>
-        end
-    end
-    MAX_CNT = 25;
-    if count < MAX_CNT
-        speed = [0;30;30;30;30;30;30];
-        waittime = [100 ;0;0;0;0;0;0];
-        trajectory(egoVehicle, waypoints, speed, waittime);
-        count = count + 1;
-        if count == MAX_CNT
-            speed = [0;30;30;30;30;30;30];
-            waittime = [MAX_CNT / 100 ;0;0;0;0;0;0];
-            trajectory(egoVehicle, waypoints, speed, waittime);
-        end
-    end
+function displaySceneAndVehicle(situation_num, count, sensor_vehicle_speed, normal_vehicle_speed, wait_end)
+    % Create the drivingScenario object and ego car
+    [scenario, egoVehicle, speed, waypoints] = createDrivingScenario(sensor_vehicle_speed, normal_vehicle_speed, wait_end);
     
-    % Update the tracker if there are new detections
-    if any(isValidTime)
-        if isa(sensors{1},'drivingRadarDataGenerator')
-            vehicleLength = sensors{1}.Profiles.Length;
+    % Create all the sensors
+    [sensors, numSensors] = createSensors(scenario);
+    
+    % Register actor profiles with the sensors.
+    profiles = actorProfiles(scenario);
+    for m = 1:numel(sensors)
+        if isa(sensors{m},'drivingRadarDataGenerator')
+            sensors{m}.Profiles = profiles;
         else
-            vehicleLength = sensors{1}.ActorProfiles.Length;
+            sensors{m}.ActorProfiles = profiles;
         end
-        confirmedTracks = updateTracks(tracker, detectionClusters, time);
-
-        % Update bird's-eye plot
-        updateBEP(BEP, egoVehicle, detectionClusters, confirmedTracks, positionSelector, velocitySelector);
     end
-    % Snap a figure for the document when the car passes the ego vehicle
-    if ta(1).Position(1) > 0 && toSnap
-        toSnap = false;
-        snapnow
+
+    tracker = multiObjectTracker('FilterInitializationFcn', @initSimDemoFilter, ...
+        'AssignmentThreshold', 30, 'ConfirmationThreshold', [4 5]);
+    positionSelector = [1 0 0 0; 0 0 1 0]; % Position selector
+    velocitySelector = [0 1 0 0; 0 0 0 1]; % Velocity selector
+
+    % Create the display and return a handle to the bird's-eye plot
+    BEP = createDemoDisplay(egoVehicle, sensors, situation_num, sensor_vehicle_speed, normal_vehicle_speed);
+    
+    toSnap = true;
+
+    % control vehicle
+    while advance(scenario) && ishghandle(BEP.Parent)
+        % Get the scenario time
+        time = scenario.SimulationTime;
+    
+        % Get the position of the other vehicle in ego vehicle coordinates
+        ta = targetPoses(egoVehicle);
+    
+        % Simulate the sensors
+        detectionClusters = {};
+        isValidTime = false(1,8);
+        for i = 1:2
+            [sensorDets,numValidDets,isValidTime(i)] = sensors{i}(ta, time);
+            if numValidDets
+                for j = 1:numValidDets
+                    % Vision detections do not report SNR. The tracker requires
+                    % that they have the same object attributes as the radar
+                    % detections. This adds the SNR object attribute to vision
+                    % detections and sets it to a NaN.
+                    if ~isfield(sensorDets{j}.ObjectAttributes{1}, 'SNR')
+                        sensorDets{j}.ObjectAttributes{1}.SNR = NaN;
+                    end
+    
+                    % Remove the Z-component of measured position and velocity
+                    % from the Measurement and MeasurementNoise fields
+                    sensorDets{j}.Measurement = sensorDets{j}.Measurement([1 2 4 5]);
+                    sensorDets{j}.MeasurementNoise = sensorDets{j}.MeasurementNoise([1 2 4 5],[1 2 4 5]);
+                end
+                detectionClusters = [detectionClusters; sensorDets]; %#ok<AGROW>
+            end
+        end
+        MAX_CNT = 25;
+        
+        if count < MAX_CNT
+            speed = [0;sensor_vehicle_speed;sensor_vehicle_speed;
+                sensor_vehicle_speed;sensor_vehicle_speed;
+                sensor_vehicle_speed;0];
+            waittime = [100;0;0;0;0;0;wait_end];
+            trajectory(egoVehicle, waypoints, speed, waittime);
+            count = count + 1;
+            if count == MAX_CNT
+                speed = [0;sensor_vehicle_speed;sensor_vehicle_speed;
+                    sensor_vehicle_speed;sensor_vehicle_speed;
+                    sensor_vehicle_speed;0];
+                waittime = [MAX_CNT / 100;0;0;0;0;0;wait_end];
+                trajectory(egoVehicle, waypoints, speed, waittime);
+            end
+        end
+        
+        % Update the tracker if there are new detections
+        if any(isValidTime)
+            if isa(sensors{1},'drivingRadarDataGenerator')
+                vehicleLength = sensors{1}.Profiles.Length;
+            else
+                vehicleLength = sensors{1}.ActorProfiles.Length;
+            end
+            confirmedTracks = updateTracks(tracker, detectionClusters, time);
+    
+            % Update bird's-eye plot
+            updateBEP(BEP, egoVehicle, detectionClusters, confirmedTracks, positionSelector, velocitySelector);
+        end
+        % Snap a figure for the document when the car passes the ego vehicle
+        if ta(1).Position(1) > 0 && toSnap
+            toSnap = false;
+            snapnow
+        end
     end
 end
 
@@ -105,9 +127,16 @@ filter = trackingKF('MotionModel', '2D Constant Velocity', ...
     'MeasurementNoise', detection.MeasurementNoise);
 end
 
-function BEP = createDemoDisplay(egoCar, sensors)
+function BEP = createDemoDisplay(egoCar, sensors, situation_num, sensor_vehicle_speed, normal_vehicle_speed)
+    % Make/clear a figure
+    hFigure = clf('reset');
+    set(gcf,'Position',[0, 0, 1200, 640], 'Name', ...  % [0, 0, 1200, 640]
+        sprintf(['Vehicle Collision Test (Situation %d: ' ...
+        'sensor_vehicle_speed: %d m/s, normal_vehicle_speed: %d m/s)'], ...
+        situation_num, sensor_vehicle_speed, normal_vehicle_speed)) 
+    % hFigure.WindowState = 'maximized';
     % Make a figure
-    hFigure = figure('Position', [0, 0, 1200, 640], 'Name', 'Sensor Fusion with Synthetic Data Example');
+    % hFigure = figure('Position', [0, 0, 1200, 640], 'Name', 'Sensor Fusion with Synthetic Data Example');
     movegui(hFigure, [0 -1]); % Moves the figure to the left and a little down from the top
 
     % Add a car plot that follows the ego vehicle from behind
@@ -119,6 +148,7 @@ function BEP = createDemoDisplay(egoCar, sensors)
     hTopViewPanel = uipanel(hFigure, 'Position', [0 0.5 0.5 0.5], 'Title', 'Top View');
     hCarPlot = axes(hTopViewPanel);
     chasePlot(egoCar, 'Parent', hCarPlot, 'ViewHeight', 130, 'ViewLocation', [0 0], 'ViewPitch', 90);
+    % chasePlot
 
     % Add a panel for a bird's-eye plot
     hBEVPanel = uipanel(hFigure, 'Position', [0.5 0 0.5 1], 'Title', 'Bird''s-Eye Plot');
@@ -232,7 +262,7 @@ sensors{2} = visionDetectionGenerator('SensorIndex', 2, ...
 numSensors = 2;
 end
 
-function [scenario, egoVehicle, speed, waypoints] = createDrivingScenario
+function [scenario, egoVehicle, speed, waypoints] = createDrivingScenario(sensor_vehicle_speed, normal_vehicle_speed, wait_end)
 % createDrivingScenario Returns the drivingScenario defined in the Designer
 
 % Construct a drivingScenario object.
@@ -246,7 +276,7 @@ marking = [laneMarking('Solid', 'Color', [0.98 0.86 0.36])
     laneMarking('DoubleSolid', 'Color', [1 1 0])
     laneMarking('Dashed')
     laneMarking('Solid')];
-laneSpecification = lanespec(4, 'Width', 2.9625, 'Marking', marking);
+laneSpecification = lanespec(4, 'Width', 4, 'Marking', marking);
 road(scenario, roadCenters, 'Lanes', laneSpecification, 'Name', 'Road');
 
 roadCenters = [30 0 0;
@@ -256,33 +286,70 @@ marking = [laneMarking('Solid', 'Color', [0.98 0.86 0.36])
     laneMarking('DoubleSolid', 'Color', [1 1 0])
     laneMarking('Dashed')
     laneMarking('Solid')];
-laneSpecification = lanespec(4, 'Width', 2.9625, 'Marking', marking);
+laneSpecification = lanespec(4, 'Width', 4, 'Marking', marking);
 road(scenario, roadCenters, 'Lanes', laneSpecification, 'Name', 'Road1');
 
 % Add the actors
-car = vehicle(scenario, ...
+% normal left vehicle
+left_car = vehicle(scenario, ...
     'ClassID', 1, ...
-    'Position', [28.4591563468747 33.3399358311803 0.01], ...
+    'Position', [24 30 0.01], ...
     'Mesh', driving.scenario.carMesh, ...
-    'Name', 'Car');
-waypoints = [28.4591563468747 33.3399358311803 0.01;
-    28.37 -33.1 0.01];
-speed = [30;30];
-trajectory(car, waypoints, speed);
+    'Name', 'Left Car');
+waypoints=[27 30 0.01;
+    27.0 11.0 0.01;
+    27.0 7.0 0.01;
+    27.5 6.0 0.01;
+    29.5 6.0 0.01;
+    30.5 6.0 0.01;
+    32.0 7.0 0.01;
+    32.0 8.0 0.01;
+    32.0 11.0 0.01;
+    32.0 30.00 0.01];
+speed = [normal_vehicle_speed;normal_vehicle_speed;normal_vehicle_speed;
+    normal_vehicle_speed;normal_vehicle_speed;normal_vehicle_speed;
+    normal_vehicle_speed;normal_vehicle_speed;normal_vehicle_speed;0];
+waittime = [0;0;0;0;0;0;0;0;0;wait_end];
+trajectory(left_car, waypoints, speed, waittime);
+
+% Add the actors
+% normal right vehicle
+right_car = vehicle(scenario, ...
+    'ClassID', 1, ...
+    'Position', [24 30 0.01], ...
+    'Mesh', driving.scenario.carMesh, ...
+    'Name', 'Right car');
+waypoints = [32 -30 0.01;
+    32.0 -20.0 0.01;
+    32.0 -10.0 0.01;
+    31.5 -2.5 0.01;
+    30.0 -1.0 0.01;
+    27.5 0.0 0.01;
+    25.0 1.0 0.01;
+    23.0 1.5 0.01;
+    20.0 2.0 0.01;
+    5.0 2.0 0.01];
+speed = [normal_vehicle_speed;normal_vehicle_speed;normal_vehicle_speed;
+    normal_vehicle_speed;normal_vehicle_speed;normal_vehicle_speed;
+    normal_vehicle_speed;normal_vehicle_speed;normal_vehicle_speed;0];
+waittime = [0;0;0;0;0;0;0;0;0;wait_end];
+trajectory(right_car, waypoints, speed, waittime);
 
 % Add the ego vehicle
+% sensor vehicle
 egoVehicle = vehicle(scenario, ...
     'ClassID', 1, ...
-    'Position', [14.59 -1.69 0.01], ...
+    'Position', [17 -2 0.01], ...
     'Mesh', driving.scenario.carMesh, ...
     'Name', 'Car1');
-waypoints = [14.87 -1.76 0.01;
-    23.06 -1.74 0.01;
-    27.59 -1.95 0.01;
-    31.17 -0.98 0.01;
-    32.09 2.64 0.01;
-    31.98 10.85 0.01;
-    31.99 34.55 0.01];
-speed = [30;30;30;30;30;30;30];
+waypoints = [17 -2 0.01;
+    23.0 -1.75 0.01;
+    27.5 -1.5 0.01;
+    30.0 -1 0.01;
+    32.0 2.5 0.01;
+    32.0 11.0 0.01;
+    32.0 30.00 0.01];
+speed = [sensor_vehicle_speed;sensor_vehicle_speed;sensor_vehicle_speed;
+    sensor_vehicle_speed;sensor_vehicle_speed;sensor_vehicle_speed;0];
 trajectory(egoVehicle, waypoints, speed);
 end

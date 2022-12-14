@@ -9,8 +9,8 @@ sensor_vehicle_speed = 10;
 normal_vehicle_speed = 10;
 wait_end = 5;
 
-for svs = 10:10:30
-    for nvs = 10:10:30
+for svs = 10:5:60
+    for nvs = 10:5:60
         fprintf('Situation %d: sensor_vehicle_speed: %d m/s, normal_vehicle_speed: %d m/s\n', situation_num, svs, nvs);
         displaySceneAndVehicle(situation_num, count, svs, nvs, wait_end);
         situation_num = situation_num + 1;
@@ -295,10 +295,6 @@ car = vehicle(scenario, ...
     'Position', [24 30 0.01], ...
     'Mesh', driving.scenario.carMesh, ...
     'Name', 'Car');
-% waypoints = [24 30 0.01;
-%     25 -30 0.01];
-% speed = [60;60];
-% trajectory(car, waypoints, speed);
 waypoints = [32 -30 0.01;
     32 25 0.01;
     32 30 0.01];

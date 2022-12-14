@@ -9,8 +9,8 @@ sensor_vehicle_speed = 10;
 normal_vehicle_speed = 10;
 wait_end = 5;
 
-for svs = 10:10:30
-    for nvs = 10:10:30
+for svs = 10:5:60
+    for nvs = 10:5:60
         fprintf('Situation %d: sensor_vehicle_speed: %d m/s, normal_vehicle_speed: %d m/s\n', situation_num, svs, nvs);
         displaySceneAndVehicle(situation_num, count, svs, nvs, wait_end);
         situation_num = situation_num + 1;
@@ -296,27 +296,11 @@ left_car = vehicle(scenario, ...
     'Position', [24 30 0.01], ...
     'Mesh', driving.scenario.carMesh, ...
     'Name', 'Left Car');
-% waypoints = [24 30 0.01;
-%     25 -30 0.01];
-% speed = [60;60];
-% trajectory(car, waypoints, speed);
-% waypoints = [24 30 0.01;
-%     24 -25 0.01;
-%     24 -30 0.01];
-waypoints=[27 30 0.01;
-    27.0 11.0 0.01;
-    27.0 2.5 0.01;
-    27.5 1.75 0.01;
-    29.0 1.0 0.01;
-    30.5 1.0 0.01;
-    31.0 1.75 0.01;
-    32.0 2.5 0.01;
-    32.0 11.0 0.01;
-    32.0 30.00 0.01];
-speed = [normal_vehicle_speed;normal_vehicle_speed;normal_vehicle_speed;
-    normal_vehicle_speed;normal_vehicle_speed;normal_vehicle_speed;
-    normal_vehicle_speed;normal_vehicle_speed;normal_vehicle_speed;0];
-waittime = [0;0;0;0;0;0;0;0;0;wait_end];
+waypoints = [24 30 0.01;
+    24 -25 0.01;
+    24 -30 0.01];
+speed = [normal_vehicle_speed;normal_vehicle_speed;0];
+waittime = [0;0;wait_end];
 trajectory(left_car, waypoints, speed, waittime);
 
 % Add the actors
@@ -326,25 +310,20 @@ right_car = vehicle(scenario, ...
     'Position', [24 30 0.01], ...
     'Mesh', driving.scenario.carMesh, ...
     'Name', 'Right car');
-% waypoints = [24 30 0.01;
-%     25 -30 0.01];
-% speed = [60;60];
-% trajectory(car, waypoints, speed);
-% waypoints = [32 -30 0.01;
-%     32 25 0.01;
-%     32 30 0.01];
 waypoints = [32 -30 0.01;
-    32.0 -11.0 0.01;
-    32.0 -2.5 0.01;
+    32.0 -20.0 0.01;
+    32.0 -10.0 0.01;
+    31.5 -2.5 0.01;
     30.0 -1.0 0.01;
-    27.5 2.0 0.01;
-    23.0 2.0 0.01;
+    27.5 0.0 0.01;
+    25.0 1.0 0.01;
+    23.0 1.5 0.01;
     20.0 2.0 0.01;
-    15.0 2.0 0.01];
+    5.0 2.0 0.01];
 speed = [normal_vehicle_speed;normal_vehicle_speed;normal_vehicle_speed;
     normal_vehicle_speed;normal_vehicle_speed;normal_vehicle_speed;
-    normal_vehicle_speed;0];
-waittime = [0;0;0;0;0;0;0;wait_end];
+    normal_vehicle_speed;normal_vehicle_speed;normal_vehicle_speed;0];
+waittime = [0;0;0;0;0;0;0;0;0;wait_end];
 trajectory(right_car, waypoints, speed, waittime);
 
 % Add the ego vehicle
