@@ -4,21 +4,21 @@ scenario.SampleTime = 0.01;
 
 % define parameter
 situation_num = 1;
-
+wait_end = 5;
 scenes = {scene1, scene2, scene3, scene4, scene5, scene6, scene7};
 
 for scene_n = 1:7
-    for cur_speed = 7:2:7
-        for cur_distance = 15:5:15
+    for cur_speed = 7:2:25
+        for cur_distance = 15:5:60
             fprintf('Situation %d: vehicle speed: %d m/s, distance: %d m\n', situation_num, cur_speed, cur_distance);
-            displaySceneAndVehicle(situation_num, count, cur_speed, cur_distance, wait_end, scenes{1, scene_n});
+            displaySceneAndVehicle(situation_num, cur_speed, cur_distance, wait_end, scenes{1, scene_n});
             situation_num = situation_num + 1;
         end
     end
 end
 
 
-function displaySceneAndVehicle(situation_num, count, vehicle_speed, distance, wait_end, scene)
+function displaySceneAndVehicle(situation_num, vehicle_speed, distance, wait_end, scene)
     % Create the drivingScenario object and ego car
     [scenario, egoVehicle, speed, waypoints] = scene.create_scene(vehicle_speed, distance, wait_end);
     
