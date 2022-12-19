@@ -1,8 +1,8 @@
-function [K, G_i, F_di, F_li, F_ij] = energy(mess, velocity, r_li)
+function [K, G_i, F_di, F_li] = energy(mess, velocity, r_li)
 K = KineticEnergy(mess, velocity);
 G_i = AttractiveForce(mess, velocity);
 F_di = ConstraintResistanceForce(mess, velocity);
-F = MarkerForce(mess, r_li, varargin);
+F_li = MarkerForce(mess, r_li);
 end
 
 function K = KineticEnergy(mess, velocity)
@@ -56,8 +56,8 @@ addParameter(p,'lane_width',3.5);
 addParameter(p,'k2',1.2);
 parse(p,varargin{:});
 l_t = p.Results.l_t;
-lane_width = p.Results.lane_width;
+l_w = p.Results.lane_width;
 k2 = p.Results.k2;
 
-F = 1.5 * mess * l_t * (l_w/2 - r_li)^k2;
+F = 2* 1.5 * mess * l_t * (l_w/2 - r_li)^k2;
 end

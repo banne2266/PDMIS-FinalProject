@@ -84,9 +84,9 @@ classdef scene6
                 30.0 -1 0.01;
                 32.0 2.5 0.01;
                 32.0 20.0 0.01];
-            speed = [0;vehicle_speed;vehicle_speed;
+            speed = [1;vehicle_speed;vehicle_speed;
                 vehicle_speed;vehicle_speed;0];
-            waittime = [1000;0;0;0;0;wait_end];
+            waittime = [0;0;0;0;0;wait_end];
             trajectory(egoVehicle, waypoints, speed, waittime);
         end
     end

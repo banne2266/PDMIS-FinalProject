@@ -4,8 +4,11 @@ scenario.SampleTime = 0.01;
 
 % define parameter
 situation_num = 1;
-wait_end = 5;
-scenes = {scene1, scene2, scene3, scene4, scene5, scene6, scene7};
+wait_end = 0;
+scenes = {scene3, scene2, scene3, scene4, scene5, scene6, scene7};
+collision_mats = [];
+global collision_mat;
+collision_mat = zeros(10);
 
 for scene_n = 1:7
     for cur_speed = 7:2:25
@@ -15,7 +18,11 @@ for scene_n = 1:7
             situation_num = situation_num + 1;
         end
     end
+    collision_mats = cat(3, collision_mats, collision_mat);
+    collision_mat = zeros(10);
 end
+
+collision_mats
 
 
 function displaySceneAndVehicle(situation_num, vehicle_speed, distance, wait_end, scene)
@@ -24,6 +31,7 @@ function displaySceneAndVehicle(situation_num, vehicle_speed, distance, wait_end
     
     % Create all the sensors
     [sensors, numSensors] = createSensors(scenario);
+    global collision_mat;
     
     % Register actor profiles with the sensors.
     profiles = actorProfiles(scenario);
@@ -45,9 +53,21 @@ function displaySceneAndVehicle(situation_num, vehicle_speed, distance, wait_end
     toSnap = true;
 
     count = 0;
+    collision = 0;
+
+    velocity_list = [];
+    position_list = [];
+    yaw_list = [];
+
+    positions = [];
+    velocities = [];
+
+
+
+    t_end = 100;
 
     % control vehicle
-    while advance(scenario) && ishghandle(BEP.Parent)
+    while advance(scenario) && ishghandle(BEP.Parent) && collision == 0
         % Get the scenario time
         time = scenario.SimulationTime;
     
@@ -78,21 +98,29 @@ function displaySceneAndVehicle(situation_num, vehicle_speed, distance, wait_end
             end
         end
 
-        positions = [];
-        velocities = [];
+        velocity_list = [velocity_list; egoVehicle.Velocity];
+        position_list = [position_list; egoVehicle.Position];
+        yaw_list = [yaw_list; egoVehicle.Yaw];
 
+        cur_positions = [];
+        cur_velocities = [];
         for i = 1:length(ta)
-            positions = [positions; ta(i).Position];
-            velocities = [velocities; ta(i).Velocity];
+            cur_positions = [cur_positions; ta(i).Position];
+            cur_velocities = [cur_velocities; ta(i).Velocity];
         end
-
-        [cost_value, go] = cost(positions, velocities);
+        positions = cat(3, positions, cur_positions);
+        velocities = cat(3, velocities, cur_velocities);
+        
+        if count > 2
+            S = BehavioralDecisionMaking(1500, velocity_list, position_list, min(t_end, count), velocities, positions, yaw_list);
+        end
+        go = 0;
 
         if go == 0
             count = count + 1;
         end
 
-        if go == 1 & count >= 0
+        if go == 1 && count >= 0
             speed = [0;vehicle_speed;vehicle_speed;
                     vehicle_speed;
                     vehicle_speed;0];
@@ -100,25 +128,19 @@ function displaySceneAndVehicle(situation_num, vehicle_speed, distance, wait_end
             trajectory(egoVehicle, waypoints, speed, waittime);
             count = -99999;
         end
+        
+        if egoVehicle.Position(2) < 10 && egoVehicle.Position(2) > -10
+            for i = 1 : height(cur_positions)
+                tmp = cur_positions;
+                dis = sqrt(tmp(i, 1) * tmp(i, 1) + tmp(i, 2) * tmp(i, 2))
+                if dis < 3
+                    collision = 1;
+                    collision_mat((vehicle_speed-5)/2, (distance-10)/5) = S;
+                    break
+                end
+            end
+        end
 
-
-
-%         MAX_CNT = 25;
-%         if count < MAX_CNT
-%             speed = [0;vehicle_speed;vehicle_speed;
-%                 vehicle_speed;vehicle_speed;
-%                 vehicle_speed;0];
-%             waittime = [1000;0;0;0;0;0;wait_end];
-%             trajectory(egoVehicle, waypoints, speed, waittime);
-%             count = count + 1;
-%             if count == MAX_CNT
-%                 speed = [0;vehicle_speed;vehicle_speed;
-%                     vehicle_speed;vehicle_speed;
-%                     vehicle_speed;0];
-%                 waittime = [MAX_CNT / 100;0;0;0;0;0;wait_end];
-%                 trajectory(egoVehicle, waypoints, speed, waittime);
-%             end
-%         end
 
         
         % Update the tracker if there are new detections
