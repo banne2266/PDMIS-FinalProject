@@ -1,8 +1,8 @@
-function [K, G_i, F_di, F_li, F_ij] = energy(mess, velocity)
+function [K, G_i, F_di, F_li, F_ij] = energy(mess, velocity, r_li)
 K = KineticEnergy(mess, velocity);
 G_i = AttractiveForce(mess, velocity);
 F_di = ConstraintResistanceForce(mess, velocity);
-
+F = MarkerForce(mess, r_li, varargin);
 end
 
 function K = KineticEnergy(mess, velocity)
@@ -48,3 +48,16 @@ tau = p.Results.tau;
 F = mess * PseudoGA(velocity) * (velocity/v_limit)^tau;
 end
 
+function F = MarkerForce(mess, r_li, varargin)
+
+p = inputParser;
+addParameter(p,'l_t',2);
+addParameter(p,'lane_width',3.5);
+addParameter(p,'k2',1.2);
+parse(p,varargin{:});
+l_t = p.Results.l_t;
+lane_width = p.Results.lane_width;
+k2 = p.Results.k2;
+
+F = 1.5 * mess * l_t * (l_w/2 - r_li)^k2;
+end
