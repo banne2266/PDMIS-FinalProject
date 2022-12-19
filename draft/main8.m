@@ -148,6 +148,7 @@ function BEP = createDemoDisplay(egoCar, sensors, situation_num, sensor_vehicle_
     hTopViewPanel = uipanel(hFigure, 'Position', [0 0.5 0.5 0.5], 'Title', 'Top View');
     hCarPlot = axes(hTopViewPanel);
     chasePlot(egoCar, 'Parent', hCarPlot, 'ViewHeight', 130, 'ViewLocation', [0 0], 'ViewPitch', 90);
+    % chasePlot
 
     % Add a panel for a bird's-eye plot
     hBEVPanel = uipanel(hFigure, 'Position', [0.5 0 0.5 1], 'Title', 'Bird''s-Eye Plot');
@@ -278,7 +279,7 @@ marking = [laneMarking('Solid', 'Color', [0.98 0.86 0.36])
 laneSpecification = lanespec(4, 'Width', 4, 'Marking', marking);
 road(scenario, roadCenters, 'Lanes', laneSpecification, 'Name', 'Road');
 
-roadCenters = [30 0 0;
+roadCenters = [60 0 0;
     0 0 0];
 marking = [laneMarking('Solid', 'Color', [0.98 0.86 0.36])
     laneMarking('Dashed')
@@ -289,18 +290,46 @@ laneSpecification = lanespec(4, 'Width', 4, 'Marking', marking);
 road(scenario, roadCenters, 'Lanes', laneSpecification, 'Name', 'Road1');
 
 % Add the actors
-% normal vehicle
-car = vehicle(scenario, ...
+% normal left vehicle
+left_car = vehicle(scenario, ...
     'ClassID', 1, ...
     'Position', [24 30 0.01], ...
     'Mesh', driving.scenario.carMesh, ...
-    'Name', 'Car');
-waypoints = [32 -30 0.01;
-    32 20 0.01;
-    32 24 0.01];
+    'Name', 'Left Car');
+waypoints = [24 30 0.01;
+    24 -25 0.01;
+    24 -30 0.01];
 speed = [normal_vehicle_speed;normal_vehicle_speed;0];
 waittime = [0;0;wait_end];
-trajectory(car, waypoints, speed, waittime);
+trajectory(left_car, waypoints, speed, waittime);
+
+% Add the actors
+% normal right vehicle
+right_car = vehicle(scenario, ...
+    'ClassID', 1, ...
+    'Position', [32 -30 0.01], ...
+    'Mesh', driving.scenario.carMesh, ...
+    'Name', 'Right car');
+waypoints = [32 -30 0.01;
+    32 25 0.01;
+    32 30 0.01];
+speed = [normal_vehicle_speed;normal_vehicle_speed;0];
+waittime = [0;0;wait_end];
+trajectory(right_car, waypoints, speed, waittime);
+
+% Add the actors
+% normal top vehicle
+top_car = vehicle(scenario, ...
+    'ClassID', 1, ...
+    'Position', [55 2 0.01], ...
+    'Mesh', driving.scenario.carMesh, ...
+    'Name', 'Right car');
+waypoints = [55 2 0.01;
+    30 2 0.01;
+    5 2 0.01];
+speed = [normal_vehicle_speed;normal_vehicle_speed;0];
+waittime = [0;0;wait_end];
+trajectory(top_car, waypoints, speed, waittime);
 
 % Add the ego vehicle
 % sensor vehicle
