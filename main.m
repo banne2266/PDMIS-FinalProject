@@ -5,10 +5,13 @@ scenario.SampleTime = 0.01;
 % define parameter
 situation_num = 1;
 wait_end = 0;
-scenes = {scene3, scene2, scene3, scene4, scene5, scene6, scene7};
+scenes = {scene1, scene2, scene3, scene4, scene5, scene6, scene7};
 collision_mats = [];
+max_S_vals = [];
 global collision_mat;
 collision_mat = zeros(10);
+global max_S_val;
+max_S_val = zeros(10);
 
 for scene_n = 1:7
     for cur_speed = 7:2:25
@@ -18,8 +21,15 @@ for scene_n = 1:7
             situation_num = situation_num + 1;
         end
     end
+
+    filename = "./results/scene" + scene_n + ".csv";
+    writematrix(collision_mat, filename);
+    filename = "./results/scene" + scene_n + "_maxS_val.csv";
+    writematrix(max_S_val, filename);
     collision_mats = cat(3, collision_mats, collision_mat);
+    max_S_vals = cat(3, max_S_vals, max_S_val);
     collision_mat = zeros(10);
+    max_S_val = zeros(10);
 end
 
 collision_mats
@@ -32,6 +42,7 @@ function displaySceneAndVehicle(situation_num, vehicle_speed, distance, wait_end
     % Create all the sensors
     [sensors, numSensors] = createSensors(scenario);
     global collision_mat;
+    global max_S_val;
     
     % Register actor profiles with the sensors.
     profiles = actorProfiles(scenario);
@@ -64,7 +75,7 @@ function displaySceneAndVehicle(situation_num, vehicle_speed, distance, wait_end
 
 
 
-    t_end = 100;
+    t_end = 50;
 
     % control vehicle
     while advance(scenario) && ishghandle(BEP.Parent) && collision == 0
@@ -111,31 +122,26 @@ function displaySceneAndVehicle(situation_num, vehicle_speed, distance, wait_end
         positions = cat(3, positions, cur_positions);
         velocities = cat(3, velocities, cur_velocities);
         
-        if count > 2
+        if count > 2 && egoVehicle.Position(2) < 10 && egoVehicle.Position(2) > -10
             S = BehavioralDecisionMaking(1500, velocity_list, position_list, min(t_end, count), velocities, positions, yaw_list);
+            if S > max_S_val((vehicle_speed-5)/2, (distance-10)/5)
+                max_S_val((vehicle_speed-5)/2, (distance-10)/5) = S;
+            end
+            if S > 4500000
+                collision = 1;
+                collision_mat((vehicle_speed-5)/2, (distance-10)/5) = 1;
+            end
         end
-        go = 0;
+        count = count + 1;
 
-        if go == 0
-            count = count + 1;
-        end
-
-        if go == 1 && count >= 0
-            speed = [0;vehicle_speed;vehicle_speed;
-                    vehicle_speed;
-                    vehicle_speed;0];
-            waittime = [count/100; 0;0;0;0;wait_end];
-            trajectory(egoVehicle, waypoints, speed, waittime);
-            count = -99999;
-        end
         
         if egoVehicle.Position(2) < 10 && egoVehicle.Position(2) > -10
             for i = 1 : height(cur_positions)
                 tmp = cur_positions;
-                dis = sqrt(tmp(i, 1) * tmp(i, 1) + tmp(i, 2) * tmp(i, 2))
+                dis = sqrt(tmp(i, 1) * tmp(i, 1) + tmp(i, 2) * tmp(i, 2));
                 if dis < 3
                     collision = 1;
-                    collision_mat((vehicle_speed-5)/2, (distance-10)/5) = S;
+                    collision_mat((vehicle_speed-5)/2, (distance-10)/5) = 2;
                     break
                 end
             end
