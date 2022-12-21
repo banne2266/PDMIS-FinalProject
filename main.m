@@ -5,7 +5,7 @@ scenario.SampleTime = 0.01;
 % define parameter
 situation_num = 1;
 wait_end = 0;
-scenes = {scene1, scene2, scene3, scene4, scene5, scene6, scene7};
+scenes = {scene1, scene2, scene3, scene4, scene5, scene6, scene7, scene8, scene9, scene10};
 collision_mats = [];
 max_S_vals = [];
 global collision_mat;
@@ -13,7 +13,7 @@ collision_mat = zeros(10);
 global max_S_val;
 max_S_val = zeros(10);
 
-for scene_n = 1:7
+for scene_n = 8:10
     for cur_speed = 7:2:25
         for cur_distance = 15:5:60
             fprintf('Situation %d: vehicle speed: %d m/s, distance: %d m\n', situation_num, cur_speed, cur_distance);
